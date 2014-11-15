@@ -13,9 +13,7 @@ object ArithmeticExpressionGenerators {
 
   val Factor = Gen.choose(Int.MinValue, Int.MaxValue)
 
-  //  val Whitespace = Gen.listOf(Gen.oneOf(" ", "\t", "\r")).map(_.mkString)
-
-  val Whitespace = Gen.oneOf(" ", "  ", "\t", " \t")
+   val Whitespace = Gen.nonEmptyListOf(Gen.oneOf(" ", "\t")).map(_.mkString)
 
   val Preamble = Gen.sequence(Seq(Whitespace, Gen.const("What is"), Whitespace)).map(_.mkString)
 
