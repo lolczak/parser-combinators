@@ -3,18 +3,23 @@ package org.lolczak.parser
 import scala.util.parsing.combinator.syntactical.StandardTokenParsers
 
 object ArithmeticExpressionParser extends StandardTokenParsers {
+  lexical.delimiters ++= List("-", "?")
+  lexical.reserved ++= List("What", "is", "plus", "minus", "multiplied", "divided", "by")
 
-//  lexical.delimiters ++= List("What", "is", "plus", "?")
-  lexical.delimiters ++= List("-","?")
-  lexical.reserved ++= List("What", "is", "plus")
+  def factor: Parser[Int] = ("-" ~> numericLit ^^ (-_.toInt)) | (numericLit ^^ (_.toInt))
 
-  def factor: Parser[Int] = ("-" ~> numericLit^^( - _.toInt) )|(numericLit ^^ (_.toInt))
-
-  def leftFactor: Parser[Int] = "What" ~ "is" ~> factor <~ "plus"
+  def leftFactor: Parser[Int] = "What" ~ "is" ~> factor
 
   def rightFactor: Parser[Int] = factor <~ "?"
 
-  def expr: Parser[Expression] = leftFactor ~ rightFactor ^^ { case a ~ b => Addition(a, b)}
+  def operation: Parser[(Int, Int) => Expression] =
+    ("plus" ^^ (x => Addition)
+      | "minus" ^^ (x => Subtraction)
+      | "multiplied" <~ "by" ^^ (x => Multiplication)
+      | "divided" <~ "by" ^^ (x => Division)
+      )
+
+  def expr: Parser[Expression] = leftFactor ~ operation ~ rightFactor ^^ { case a ~ op ~ b => op(a, b)}
 
   def parse(question: String): ParseResult[Expression] = expr(new lexical.Scanner(question))
 
