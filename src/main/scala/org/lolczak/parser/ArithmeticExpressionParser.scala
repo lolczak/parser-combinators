@@ -13,11 +13,10 @@ object ArithmeticExpressionParser extends StandardTokenParsers {
   def rightFactor: Parser[Int] = factor <~ "?"
 
   def operation: Parser[(Int, Int) => Expression] =
-    ("plus" ^^ (x => Addition)
-      | "minus" ^^ (x => Subtraction)
-      | "multiplied" <~ "by" ^^ (x => Multiplication)
-      | "divided" <~ "by" ^^ (x => Division)
-      )
+      ( "plus" ^^ { _ => Addition}
+      | "minus" ^^ { _ => Subtraction}
+      | "multiplied" <~ "by" ^^ { _ => Multiplication}
+      | "divided" <~ "by" ^^ { _ => Division})
 
   def expr: Parser[Expression] = leftFactor ~ operation ~ rightFactor ^^ { case a ~ op ~ b => op(a, b)}
 
