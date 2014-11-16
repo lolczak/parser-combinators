@@ -1,18 +1,21 @@
 package org.lolczak
 
-import scalaz.State
+import scalaz.effect.IO
 
 object QuizRunner {
 
-  def playOneTurn[A, B](turn: Turn[A, B], quiz: Quiz, answerEval: A => B): State[Quiz, Boolean] = ???
+  def playOneTurn[A, B](answerEval: A => B)(question: IO[A], verifier: IO[B => Boolean]): IO[Boolean] =
+    for {
+      q <- question
+      test <- verifier
+    } yield test(answerEval(q))
 
-  def play[A, B](provider: Stream[Turn[A, B]], no: Int, answerEval: A => B): Boolean = ???
+
+  def play[A, B](no: Int, answerEval: A => B)(questions: Stream[IO[A]], verifiers: Stream[IO[B => Boolean]]): IO[Boolean] = ???
 
 }
 
-case class Turn[A, B](question: A, verifier: ()=> B => Boolean)
-
-case class Quiz(token: String, turnNo: Int, state: Game)
+case class Quiz(turnNo: Int, state: Game)
 
 sealed trait Game
 
