@@ -1,5 +1,6 @@
 package org.lolczak
 
+import org.lolczak.testinator.QuizRunner
 import org.scalatest.{WordSpec, Matchers, FlatSpec}
 
 import scalaz.effect.IO

@@ -1,6 +1,7 @@
 package org.lolczak.parser
 
 import org.lolczak.parser.ArithmeticExpressionGenerators._
+import org.lolczak.testinator._
 import org.scalacheck.{Gen, Shrink}
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FlatSpec, Matchers}
@@ -52,7 +53,7 @@ class ArithmeticExpressionParserSpec extends FlatSpec with Matchers with Generat
   "An ArithmeticExpressionParser" should "parse addition expression" in {
     forAll(AdditionGenerator) { (testCase) =>
       val (question, f1, f2) = testCase
-      val result = ArithmeticExpressionParser.parse(question)
+      val result = QuestionParser.parse(question)
       println(s"q: $question, r:$result")
       result should be('successful)
       result.get should equal(Addition(f1, f2))
@@ -62,7 +63,7 @@ class ArithmeticExpressionParserSpec extends FlatSpec with Matchers with Generat
   it should "parse subtraction expression" in {
     forAll(SubtractionGenerator) { (testCase) =>
       val (question, f1, f2) = testCase
-      val result = ArithmeticExpressionParser.parse(question)
+      val result = QuestionParser.parse(question)
       println(s"q: $question, r:$result")
       result should be('successful)
       result.get should equal(Subtraction(f1, f2))
@@ -72,7 +73,7 @@ class ArithmeticExpressionParserSpec extends FlatSpec with Matchers with Generat
   it should "parse multiplication expression" in {
     forAll(MultiplicationGenerator) { (testCase) =>
       val (question, f1, f2) = testCase
-      val result = ArithmeticExpressionParser.parse(question)
+      val result = QuestionParser.parse(question)
       println(s"q: $question, r:$result")
       result should be('successful)
       result.get should equal(Multiplication(f1, f2))
@@ -82,7 +83,7 @@ class ArithmeticExpressionParserSpec extends FlatSpec with Matchers with Generat
   it should "parse division expression" in {
     forAll(DivisionGenerator) { (testCase) =>
       val (question, f1, f2) = testCase
-      val result = ArithmeticExpressionParser.parse(question)
+      val result = QuestionParser.parse(question)
       println(s"q: $question, r:$result")
       result should be('successful)
       result.get should equal(Division(f1, f2))
@@ -91,7 +92,7 @@ class ArithmeticExpressionParserSpec extends FlatSpec with Matchers with Generat
 
   it should "report an error when question doesn't meet grammar" in {
     forAll(Gen.alphaStr) { question =>
-      val result = ArithmeticExpressionParser.parse(question)
+      val result = QuestionParser.parse(question)
       println(s"q: $question, r:$result")
       result shouldNot be('successful)
     }

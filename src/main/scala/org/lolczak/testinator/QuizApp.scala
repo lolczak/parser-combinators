@@ -1,8 +1,7 @@
-package org.lolczak
+package org.lolczak.testinator
 
 import io.shaka.http.Http._
 import io.shaka.http.Request.GET
-import org.lolczak.parser._
 
 import scalaz.effect.IO
 import scalaz.stream._
@@ -25,7 +24,7 @@ object QuizApp extends App {
   }
 
   def eval(question: String): Int = {
-    val expr = ArithmeticExpressionParser.parse(question).get
+    val expr = QuestionParser.parse(question).get
 
     expr match {
       case Addition(x, y) => x + y
@@ -34,27 +33,23 @@ object QuizApp extends App {
     }
   }
 
-  val answer: Int => IO[ Boolean] = {result => IO {
+  val answer: Int => IO[Boolean] = { result => IO {
     println(s"responding $result")
     val get = http(GET(s"http://testinator-project.appspot.com/$token/answer/$result")).entityAsString
     println(s"got result: $get")
     get.trim == "pass"
-  }}
+  }
+  }
 
- val questions= Process.repeatEval(question).takeWhile(x=> !x.contains(end))
+  val questions = Process.repeatEval(question).takeWhile(x => !x.contains(end))
 
-  /**
-   * An effectful channel, to which we can send values and
-   * get back responses. Modeled as a source of effectful
-   * functions.
-   */
-  //    type Channel[+F[_],-I,O] = Process[F, I => F[O]]
-
-  //Channel[F,B, Boolean] Process[IO, Int=>IO[Boolan]
-
-  val answers = Process.repeatEval(IO{answer})
+  val answers = Process.repeatEval(IO {
+    answer
+  })
 
   val result = QuizRunner.play[IO, String, Int](eval)(questions)(answers)
+
+  println("invoking")
 
   val won = result.unsafePerformIO()
 
