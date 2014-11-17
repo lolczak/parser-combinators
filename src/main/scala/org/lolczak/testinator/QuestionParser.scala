@@ -25,7 +25,7 @@ object QuestionParser extends StandardTokenParsers {
 }
 
 sealed trait Question
-case class Addition(arg1: Int, arg2: Int) extends Question
-case class Subtraction(arg1: Int, arg2: Int) extends Question
-case class Multiplication(arg1: Int, arg2: Int) extends Question
-case class Division(arg1: Int, arg2: Int) extends Question
+case class Addition(x: Int, y: Int) extends Question
+case class Subtraction(x: Int, y: Int) extends Question
+case class Multiplication(x: Int, y: Int) extends Question
+case class Division(x: Int, y: Int) extends Question
