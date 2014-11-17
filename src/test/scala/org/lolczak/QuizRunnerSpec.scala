@@ -9,17 +9,17 @@ class QuizRunnerSpec extends WordSpec with Matchers {
   import QuizRunner._
 
   "A quiz runner" when {
-    "playing on turn" should {
-      "return true for correct answer" in {
-        val result = playOneTurn{x:String => "answer"}(IO { "question"}, IO { _ == "answer"})
-        result.unsafePerformIO() should be(true)
-      }
-
-      "return false for incorrect answer" in {
-        val result = playOneTurn{x:String => "answer1"}(IO { "question"}, IO { _ == "answer"})
-        result.unsafePerformIO() should be(false)
-      }
-    }
+//    "playing on turn" should {
+//      "return true for correct answer" in {
+//        val result = playOneTurn{x:String => "answer"}(IO { "question"}, IO { _ == "answer"})
+//        result.unsafePerformIO() should be(true)
+//      }
+//
+//      "return false for incorrect answer" in {
+//        val result = playOneTurn{x:String => "answer1"}(IO { "question"}, IO { _ == "answer"})
+//        result.unsafePerformIO() should be(false)
+//      }
+//    }
 
 //    "playing whole game" should {
 //      "return true if all answers were correct" in {

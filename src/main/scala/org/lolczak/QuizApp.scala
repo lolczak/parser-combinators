@@ -7,6 +7,8 @@ import scalaz.effect.IO
 
 object QuizApp extends App {
 
+  val fail = "Spoilt scorecard. Please start again."
+
   val pre = "Hi lukasz. Your token is: "
 
   val token = http(GET(s"http://testinator-project.appspot.com/startTest/lukasz")).entityAsString.substring(pre.length)
@@ -31,7 +33,7 @@ println(s"token: $token")
     get.trim == "pass"
   }
 
-  val result = QuizRunner.play(9, eval)(question, answer)
+  val result = QuizRunner.playIo(9, eval)(question, answer)
 
   val won = result.unsafePerformIO()
 
