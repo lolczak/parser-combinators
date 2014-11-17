@@ -6,15 +6,13 @@ import io.shaka.http.Request.GET
 import scalaz.effect.IO
 import scalaz.stream._
 
-object QuizApp extends App {
+object TestinatorApp extends App {
 
   val fail = "Spoilt scorecard. Please start again."
 
-  val pre = "Hi lukasz. Your token is: "
-
   val end = "You have finished"
 
-  val token = http(GET(s"http://testinator-project.appspot.com/startTest/lukasz")).entityAsString.substring(pre.length)
+  val token = TokenParser.parse(http(GET(s"http://testinator-project.appspot.com/startTest/lukasz")).entityAsString).right.get
   println(s"token: $token")
 
   val question: IO[String] = IO {
@@ -52,8 +50,6 @@ object QuizApp extends App {
   println("invoking")
 
   val won = result.unsafePerformIO()
-
-  println(http(GET(s"http://testinator-project.appspot.com/$token/nextQuestion")).entityAsString)
 
   println(s"won: $won")
 

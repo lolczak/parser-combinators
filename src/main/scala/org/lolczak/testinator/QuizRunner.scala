@@ -10,7 +10,7 @@ object QuizRunner {
   def play[F[_], A, B](toAnswer: A => B)(questions: Process[F, A])(verifiers: Channel[F, B, Boolean])(implicit F: Monad[F], C: Catchable[F]): F[Boolean] = {
     val answers = questions map toAnswer
     val results = answers through verifiers
-    val result = results takeWhile correctAnswers
+    val result = results takeThrough correctAnswers
     result.runLastOr[F, Boolean](true)
   }
 
