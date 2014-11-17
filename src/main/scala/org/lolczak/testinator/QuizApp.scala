@@ -24,7 +24,7 @@ object QuizApp extends App {
   }
 
   def eval(question: String): Int = {
-    val expr = QuestionParser.parse(question).get
+    val expr = QuestionParser.parse(question).right.get
 
     expr match {
       case Addition(x, y) => x + y
