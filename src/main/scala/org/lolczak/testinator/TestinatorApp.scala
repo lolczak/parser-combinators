@@ -1,8 +1,11 @@
 package org.lolczak.testinator
 
+import java.text.ParseException
+
 import io.shaka.http.Http._
 import io.shaka.http.Request.GET
 
+import scalaz.{\/-, -\/}
 import scalaz.effect.IO
 import scalaz.stream._
 
@@ -18,18 +21,16 @@ object TestinatorApp extends App {
   val question: IO[String] = IO {
     val get = http(GET(s"http://testinator-project.appspot.com/$token/nextQuestion")).entityAsString
     println(s"got question: $get")
+//    throw new Exception
     get
   }
 
-  def eval(question: String): Int = {
-    val expr = QuestionParser.parse(question).right.get
-
-    expr match {
+  def eval(question: Question): Int =     question match {
       case Addition(x, y) => x + y
       case Subtraction(x, y) => x - y
       case Multiplication(x, y) => x * y
     }
-  }
+
 
   val answer: Int => IO[Boolean] = { result => IO {
     println(s"responding $result")
@@ -39,19 +40,47 @@ object TestinatorApp extends App {
   }
   }
 
-  val questions = Process.repeatEval(question).takeWhile(x => !x.contains(end))
+  val questions = Process.repeatEval(question)
+    .takeWhile(x => !x.contains(end))
+    .flatMap { questionStr =>
+     QuestionParser.parse(questionStr) match {
+       case Right(Multiplication(x, y)) => Process.fail(WrongQuestion("test"))
+       case Right(q) => Process.emit(q)
+       case Left(err) => Process.fail(WrongQuestion(err))
+     }
+  }
 
   val answers = Process.repeatEval(IO {
     answer
   })
 
-  val result = QuizRunner.play[IO, String, Int](eval)(questions)(answers)
+  val result = QuizRunner.play[IO, Question, Int](eval)(questions)(answers)
 
-  println("invoking")
 
-  val won = result.unsafePerformIO()
+  def runUnsafe(): Unit = {
+    println("invoking")
 
-  println(s"won: $won")
+    result.onException(IO{
+      println("exception")
+    })
+
+    try {
+     val run = result.catchLeft
+
+     run.unsafePerformIO() match {
+       case -\/(ex) => println(s"Error during gaming $ex")
+       case \/-(won) => if (won) println("You won") else println("You lost")
+     }
+    } catch {
+      case e: Throwable => println(s"Unexpected error $e")
+    }
+
+  }
+
+  runUnsafe()
 
 
 }
+
+case class WrongTokenMsg(msg:String) extends Exception
+case class WrongQuestion(msg:String) extends Exception
