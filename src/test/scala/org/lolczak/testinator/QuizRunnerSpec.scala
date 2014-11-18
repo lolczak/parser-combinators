@@ -1,7 +1,7 @@
-package org.lolczak
+package org.lolczak.testinator
 
-import org.lolczak.testinator.QuizRunner
 import org.scalatest.{FlatSpec, Matchers}
+
 import scalaz.concurrent.Task
 import scalaz.stream._
 
@@ -52,5 +52,13 @@ class QuizRunnerSpec extends FlatSpec with Matchers {
     result.run
     counter should be(6)
   }
+
+  it should "answer all questions"
+
+  it should "play until \"You have finished\" question" in {
+
+  }
+
+  it should "return wrong question exception on malformed question"
 
 }

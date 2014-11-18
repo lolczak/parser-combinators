@@ -5,7 +5,7 @@ import scalaz.{Catchable, Monad}
 
 object QuizRunner {
 
-  def playOneTurn[A, B](answerOn: A => B)(question: A, test: B => Boolean): Boolean = test(answerOn(question))
+  val end = "You have finished"
 
   def play[F[_], A, B](toAnswer: A => B)(questions: Process[F, A])(verifiers: Channel[F, B, Boolean])(implicit F: Monad[F], C: Catchable[F]): F[Boolean] = {
     val answers = questions map toAnswer
@@ -14,6 +14,27 @@ object QuizRunner {
     result.runLastOr[F, Boolean](true)
   }
 
+  def run[F[_]](questions: Process[F, String], verifiers: Channel[F, Int, Boolean])(implicit F: Monad[F], C: Catchable[F]): F[Boolean] = {
+    val q = questions.takeWhile(x => !x.contains(end))
+      .flatMap { questionStr =>
+      QuestionParser.parse(questionStr) match {
+        case Right(Multiplication(x, y)) => Process.fail(InvalidQuestionException("test"))
+        case Right(q) => Process.emit(q)
+        case Left(err) => Process.fail(InvalidQuestionException(err))
+      }
+    }
+    
+    play(answerFun)(q)(verifiers)
+  }
+
+  def answerFun(question: Question): Int =     question match {
+    case Addition(x, y) => x + y
+    case Subtraction(x, y) => x - y
+    case Multiplication(x, y) => x * y
+  }
+
   private def correctAnswers = identity[Boolean] _
 
 }
+
+case class InvalidQuestionException(msg:String) extends Exception
