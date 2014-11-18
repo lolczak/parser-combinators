@@ -4,6 +4,7 @@ import org.scalacheck.Shrink
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.util.Random
 import scalaz.concurrent.Task
 import scalaz.stream._
 
@@ -22,25 +23,7 @@ class QuizRunnerSpec extends FlatSpec with Matchers with GeneratorDrivenProperty
     (questions, verifiers)
   }
 
-  "A QuizRunner" should "play until end of question stream" in {
-    var counter = 0
-    val questions: Process[Task, Int] = Process.repeatEval(Task.delay {
-      val ret = counter
-      counter = counter + 1
-      ret
-    }).take(10)
-    val verifiers = Process.range(0, 10) map { correct => { toCheck: Int =>
-      println(s"compering $toCheck vs $correct")
-      Task.delay(toCheck == correct)
-    }
-    }
-
-    val result = QuizRunner.play({ x: Int => x})(questions)(verifiers)
-    result.run should be(true)
-    counter should be(10)
-  }
-
-  it should "return true if all answers were correct" in {
+  "A QuizRunner" should "return true if all answers were correct" in {
     forAll(questionWithAnswerGen) { questionsWithAnswers =>
       val (questions, verifiers) = unzip(questionsWithAnswers)
       val result = QuizRunner.run(questions, verifiers)
@@ -49,13 +32,14 @@ class QuizRunnerSpec extends FlatSpec with Matchers with GeneratorDrivenProperty
   }
 
   it should "return false if any answer was incorrect" in {
-    val questions: Process[Task, Int] = Process.range(0, 10)
-    val verifiers = Process.range(0, 10) map { correct => { toCheck: Int =>
-      Task.delay(correct < 5)
+    forAll(questionWithAnswerGen) { questionsWithAnswers =>
+      val (q,a) = questionsWithAnswers.unzip
+      val indexToChange = Random.nextInt(a.size)
+      val wrong = a.zipWithIndex.map {case (answer, index) => if (index == indexToChange) answer+1 else answer}
+      val (questions, verifiers) = unzip(q zip wrong)
+      val result = QuizRunner.run(questions, verifiers)
+      result.run should be(false)
     }
-    }
-    val result = QuizRunner.play({ x: Int => x})(questions)(verifiers)
-    result.run should be(false)
   }
 
   it should "stop playing on wrong answer" in {
