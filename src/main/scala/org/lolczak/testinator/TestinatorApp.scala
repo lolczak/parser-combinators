@@ -16,30 +16,26 @@ object TestinatorApp extends App {
   private val name = "Lukasz"
 
   private def tokenAction(host: String) =
-    IO {
-      http(GET(s"http://$host/startTest/$name")).entityAsString
-    } flatMap (TokenParser.parse(_) match {
+    IO { http(GET(s"http://$host/startTest/$name")).entityAsString }
+    .flatMap (TokenParser.parse(_) match {
       case Left(errorMsg) => IO.throwIO[String](InvalidTokenMsgException(errorMsg))
-      case Right(token) => IO { token }
+      case Right(token) => IO {
+        token
+      }
     })
 
   private def questionAction(host: String, token: String) =
     IO { http(GET(s"http://$host/$token/nextQuestion")).entityAsString }
 
-  private def answerAction(host: String, token: String): Int => IO[Boolean] = { result =>
-    IO {
-      println(s"responding $result")
-      val get = http(GET(s"http://$host/$token/answer/$result")).entityAsString
-      println(s"got result: $get")
-      get.trim == "pass"
-    }
-  }
+  private def answerAction(host: String, token: String): Int => IO[Boolean] =
+    result => IO { http(GET(s"http://$host/$token/answer/$result")).entityAsString.trim == "pass" }
 
   def run(env: Env): Unit = {
     val action = for {
+      _ <- IO.putStrLn(s"Staring quiz on ${env.host}")
       token <- tokenAction(env.host)
       questions = Process.repeatEval(questionAction(env.host, token))
-      answers = Process.repeatEval( IO { answerAction(env.host, token) })
+      answers = Process.repeatEval(IO { answerAction(env.host, token) })
       result <- QuizRunner.run[IO](questions, answers)
     } yield result
 

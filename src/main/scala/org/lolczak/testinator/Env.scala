@@ -1,7 +1,7 @@
 package org.lolczak.testinator
 
 /*
-Host should be loaded from config file, but I had no time to do it.
+Host should be read from config file, but I had no time to do it.
  */
 trait Env {
 
