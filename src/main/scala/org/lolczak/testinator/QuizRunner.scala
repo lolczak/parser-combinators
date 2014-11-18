@@ -15,18 +15,18 @@ object QuizRunner {
   }
 
   def run[F[_]](questions: Process[F, String], verifiers: Channel[F, Int, Boolean])(implicit F: Monad[F], C: Catchable[F]): F[Boolean] = {
-    val q = questions.takeWhile(x => !x.contains(end))
+    val parsedQuestions = questions.takeWhile(x => !x.contains(end))
       .flatMap { questionStr =>
       QuestionParser.parse(questionStr) match {
         case Right(question) => Process.emit(question)
         case Left(err) => Process.fail(InvalidQuestionException(err))
       }
     }
-    
-    play(answerFun)(q)(verifiers)
+
+    play(answerFun)(parsedQuestions)(verifiers)
   }
 
-  def answerFun(question: Question): Int =     question match {
+  def answerFun(question: Question): Int = question match {
     case Addition(x, y) => x + y
     case Subtraction(x, y) => x - y
     case Multiplication(x, y) => x * y
@@ -36,4 +36,4 @@ object QuizRunner {
 
 }
 
-case class InvalidQuestionException(msg:String) extends  Exception(msg)
+case class InvalidQuestionException(msg: String) extends Exception(msg)
