@@ -7,6 +7,10 @@ import scalaz.effect.IO
 import scalaz.stream._
 import scalaz.{-\/, \/-}
 
+/*
+This class should be also unit tested (due to IO monad it is possible), but I had no time to do that.
+The most important is to unit test domain logic, so I invested my time to do that.
+ */
 object TestinatorApp extends App {
 
   private val name = "Lukasz"
@@ -14,7 +18,7 @@ object TestinatorApp extends App {
   private def tokenAction(host: String) =
     IO {
       http(GET(s"http://$host/startTest/$name")).entityAsString
-    } .flatMap (TokenParser.parse(_) match {
+    } flatMap (TokenParser.parse(_) match {
       case Left(errorMsg) => IO.throwIO[String](InvalidTokenMsgException(errorMsg))
       case Right(token) => IO { token }
     })
@@ -40,7 +44,7 @@ object TestinatorApp extends App {
     } yield result
 
     action.catchLeft.unsafePerformIO() match {
-      case -\/(ex) => println(s"Error occurred during game $ex")
+      case -\/(ex) => println(s"Error occurred during game: $ex")
       case \/-(won) => if (won) println("You won :)") else println("You lost :(")
     }
   }
