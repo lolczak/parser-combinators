@@ -35,4 +35,10 @@ object QuestionGenerators {
 
   val multiplicationGen = questionGen(multipliedGen)
 
+  val questionWithAnswerGen = Gen.nonEmptyListOf(Gen.oneOf(
+    additionGen map { case (str, x,y) => (str, x+y) },
+    subtractionGen map { case (str, x,y) => (str, x-y) },
+    multiplicationGen map { case (str, x,y) => (str, x*y) }
+  ))
+
 }
