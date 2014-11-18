@@ -23,6 +23,15 @@ class QuizRunnerSpec extends FlatSpec with Matchers with GeneratorDrivenProperty
     (questions, verifiers)
   }
 
+  def toWrong(questionsWithAnswers: List[(String, Int)]): (Process[Task, String], Process[Task, Int => Task[Boolean]], Int) = {
+    val (q, a) = questionsWithAnswers.unzip
+    val indexToChange = Random.nextInt(a.size)
+    val wrong = a.zipWithIndex.map { case (answer, index) => if (index == indexToChange) answer + 1 else answer}
+    val (questions, verifiers) = unzip(q zip wrong)
+    (questions, verifiers, indexToChange)
+  }
+
+
   "A QuizRunner" should "return true if all answers were correct" in {
     forAll(questionWithAnswerGen) { questionsWithAnswers =>
       val (questions, verifiers) = unzip(questionsWithAnswers)
@@ -33,41 +42,44 @@ class QuizRunnerSpec extends FlatSpec with Matchers with GeneratorDrivenProperty
 
   it should "return false if any answer was incorrect" in {
     forAll(questionWithAnswerGen) { questionsWithAnswers =>
-      val (q,a) = questionsWithAnswers.unzip
-      val indexToChange = Random.nextInt(a.size)
-      val wrong = a.zipWithIndex.map {case (answer, index) => if (index == indexToChange) answer+1 else answer}
-      val (questions, verifiers) = unzip(q zip wrong)
+      val (questions, verifiers, _) = toWrong(questionsWithAnswers)
       val result = QuizRunner.run(questions, verifiers)
       result.run should be(false)
     }
   }
 
-  it should "stop playing on wrong answer" in {
-    var counter = 0
-    val questions: Process[Task, Int] = Process.repeatEval(Task.delay {
-      val ret = counter
-      counter = counter + 1
-      ret
-    })
-    val verifiers = Process.range(0, 10) map { correct => { toCheck: Int =>
-      Task.delay(correct < 5)
+  it should "stop after wrong answer" in {
+    forAll(questionWithAnswerGen) { questionsWithAnswers =>
+      val (questions, verifiers, wrongAnswerIndex) = toWrong(questionsWithAnswers)
+      var questionCounter = 0
+      var answerCounter = 0
+      val questionsWithCounting = questions map { q => questionCounter += 1; q}
+      val verifiersWithCounting = verifiers map { f => { x: Int => answerCounter += 1; f(x)} }
+      val result = QuizRunner.run(questionsWithCounting, verifiersWithCounting)
+      result.run should be(false)
+      questionCounter should be(wrongAnswerIndex + 1)
+      answerCounter should be(wrongAnswerIndex + 1)
     }
-    }
-    val result = QuizRunner.play({ x: Int => x})(questions)(verifiers)
-    result.run
-    counter should be(6)
   }
 
-  it should "answer all questions" in {
-
-  }
-
-  it should "play until 'You have finished' question" in {
-
+  it should "answer all questions until 'You have finished' question" in {
+    forAll(questionWithAnswerGen) { questionsWithAnswers =>
+      val (questionList, answerList) = questionsWithAnswers.unzip
+      val number = Random.nextInt(questionList.size)
+      val (questions, verifiers) = unzip(questionList.take(number) ++ List("You have finished' question") ++ questionList.takeRight(questionList.size-number) zip answerList )
+      var questionCounter = 0
+      var answerCounter = 0
+      val questionsWithCounting = questions map { q => questionCounter += 1; q}
+      val verifiersWithCounting = verifiers map { f => { x: Int =>  answerCounter += 1; f(x)} }
+      val result = QuizRunner.run(questionsWithCounting, verifiersWithCounting)
+      result.run should be(true)
+      questionCounter should be(number + 1)
+      answerCounter should be(number)
+    }
   }
 
   it should "return wrong question exception on malformed question" in {
-
+    //task fail
   }
 
 }
