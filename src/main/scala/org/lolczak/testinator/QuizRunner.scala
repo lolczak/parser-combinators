@@ -18,8 +18,7 @@ object QuizRunner {
     val q = questions.takeWhile(x => !x.contains(end))
       .flatMap { questionStr =>
       QuestionParser.parse(questionStr) match {
-        case Right(Multiplication(x, y)) => Process.fail(InvalidQuestionException("test"))
-        case Right(q) => Process.emit(q)
+        case Right(question) => Process.emit(question)
         case Left(err) => Process.fail(InvalidQuestionException(err))
       }
     }
@@ -37,4 +36,4 @@ object QuizRunner {
 
 }
 
-case class InvalidQuestionException(msg:String) extends Exception
+case class InvalidQuestionException(msg:String) extends  Exception(msg)

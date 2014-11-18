@@ -2,7 +2,6 @@ package org.lolczak.testinator
 
 import io.shaka.http.Http._
 import io.shaka.http.Request.GET
-import org.lolczak.testinator
 
 import scalaz.effect.IO
 import scalaz.stream._
@@ -16,7 +15,7 @@ object TestinatorApp extends App {
     IO {
       http(GET(s"http://$host/startTest/$name")).entityAsString
     } .flatMap (TokenParser.parse(_) match {
-      case Left(errorMsg) => IO.throwIO[String](WrongTokenMsException(errorMsg))
+      case Left(errorMsg) => IO.throwIO[String](InvalidTokenMsgException(errorMsg))
       case Right(token) => IO { token }
     })
 
@@ -32,7 +31,7 @@ object TestinatorApp extends App {
     }
   }
 
-  def runUnsafe(env: Env): Unit = {
+  def run(env: Env): Unit = {
     val action = for {
       token <- tokenAction(env.host)
       questions = Process.repeatEval(questionAction(env.host, token))
@@ -41,13 +40,13 @@ object TestinatorApp extends App {
     } yield result
 
     action.catchLeft.unsafePerformIO() match {
-      case -\/(ex) => println(s"Error during gaming $ex")
-      case \/-(won) => if (won) println("You won") else println("You lost")
+      case -\/(ex) => println(s"Error occurred during game $ex")
+      case \/-(won) => if (won) println("You won :)") else println("You lost :(")
     }
   }
 
-  runUnsafe(AppSpotEnv)
+  run(AppSpotEnv)
 
 }
 
-case class WrongTokenMsException(msg: String) extends Exception
+case class InvalidTokenMsgException(msg: String) extends Exception(msg)
